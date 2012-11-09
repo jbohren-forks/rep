@@ -1,0 +1,115 @@
+REP: 129
+Title: Separation of environment and source tree tools
+Author: Tully Foote <tfoote@willowgarage.com>, Dirk Thomas <dthomas@willowgarage.com>, Thibault Kruse <kruset@in.tum.de>, William Woodall <wwoodall@willowgarage.com>
+Status: Active
+Type: Informational
+Content-Type: text/x-rst
+Created: 09-Nov-2012
+Post-History:
+
+
+Abstract
+========
+
+This REP defines the redesign of the rosinstall/rosws tools for catkin,
+into two distinct commands, called wstool and catkin_ws.
+
+Specification
+=============
+
+For catkin workspaces in ROS groovy, the rosws command will be
+replaced by a similar command that mirrors rosws syntax and
+functionality except except for the generation of setup.*sh files.
+
+There will be a new command as part of the catkin ecosystem called
+catkin_ws, this one creates a folder structure as given in REP128.
+
+Motivation
+==========
+
+Early ROS releases shipped with the ``rosinstall`` tool, which
+provided communication with severeal SCMs, maintenance of a folder
+tree, creation of a build and runtime environment (via the ROS_PACKAGE_PATH).
+
+With the migration to catkin, the functionality of rosws to search for
+a ROS stack and generate a setup.sh file that sets ROS environment variables
+is not required anymore, but instead is confusing.
+
+As a workaround, a special option for rosinstall and rosws has been added
+to rosinstall / rosws with the release of ROS fuerte:
+
+rosinstall --catkin ...
+rosws init --catkin ...
+rosws regenerate --catkin ...
+
+The --catkin option suppresses generation of setup.*sh files, and
+instead generates a CMakeLists.txt.
+
+With this option the user always has to remember to call the --catkin
+option, else setup.*sh files would be generated, which could be confusing.
+While there is no harm, users can be expected to be confused.
+
+Therefore, differently named commands will be used for each kind of workspace.
+
+A differently named command can also later be extended to better support
+the different contraints of catkin workspaces.
+
+Also this problem reveals the general problem of mixing source
+management with setting up an environment. While rosinstall allowed
+setting up a workspace with just a single command, this design made
+it hard for rosinstall to support several ROS distributions with ever
+changing environment properties.
+
+Therefore, the rosws replacement for catkin_workspaces will not offer
+any environment generation capabilities (setup.sh and similar), but merely
+maintain a single declarative file with source projects and the file tree.
+
+Environment tools may use the file syntax or library functions to reason
+about the source tree and generate an environment accordingly.
+
+Alternatives
+------------
+
+- Keep --catkin option
+
+Not desirable because of user confusion
+
+- change rosws default behavior
+
+Not desirable because of documentation backwards compatibility
+
+- Automatic detection of workspace type
+
+Not possible without fragile hacks
+
+Backwards Compatibility
+=======================
+
+The rosws command remains in existence and maintained.
+
+Reference Implementation
+========================
+
+The Groovy distribution of ROS will provide two separate tools
+following the guidelines of this REP.
+
+
+References and Footnotes
+========================
+
+
+Copyright
+=========
+
+This document has been placed in the public domain.
+
+
+..
+   Local Variables:
+   mode: indented-text
+   indent-tabs-mode: nil
+   sentence-end-double-space: t
+   fill-column: 70
+   coding: utf-8
+   End:
+
