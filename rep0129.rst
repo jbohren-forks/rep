@@ -1,4 +1,4 @@
-REP: 129
+REP: 130
 Title: Separation of environment and source tree tools
 Author: Tully Foote <tfoote@willowgarage.com>, Dirk Thomas <dthomas@willowgarage.com>, Thibault Kruse <kruset@in.tum.de>, William Woodall <wwoodall@willowgarage.com>
 Status: Active
@@ -44,7 +44,6 @@ The catkin_make command has this syntax:
 catkin_make init [PATH]: create a REP128 compatible folder structure in PATH or current folder.
 This also involves creating environment setup file setup.*sh as specified in REP128.
 
-
 Motivation
 ==========
 
@@ -89,6 +88,43 @@ maintain a single declarative file with source projects and the file tree.
 
 Environment tools may use the file syntax or library functions to reason
 about the source tree and generate an environment accordingly.
+
+Rationale
+=========
+
+REP128 drafts a model workspace for usage with catkin.
+
+This is the recommended layout for development::
+
+ workspace_folder/        --WORKSPACE
+   src/                   --SOURCE SPACE
+     CMakeLists.txt       --This is symlinked to catkin/cmake/toplevel.cmake
+   build/                 --BUILD SPACE
+     CATKIN_IGNORE        --Marking the folder to be ignored when crawling for packages
+   devel/                 --DEVEL SPACE
+     .catkin              --Marking the folder as a development space (the file contains a semicolon separated list of Source space paths)
+     env.bash
+     setup.bash
+     setup.sh
+     setup.zsh
+
+Setting up this workspace manually is tedious and error-prone. The
+catkin_make tool will create this structure, possibly by invoking
+other tools such as cmake. The implementation details of catkin_make
+are not part of this REP.
+
+wstool will act only on the src folder::
+
+ workspace_folder/        --WORKSPACE
+   src/                   --SOURCE SPACE
+     CMakeLists.txt       --This is symlinked to catkin/cmake/toplevel.cmake
+     .rosinstall
+
+wstool init will create a .rosinstall file which will act the same way
+as for the rosinstall tool before.
+
+The wstool commands will affect this .rosinstall file and subfolders of the src folder.
+
 
 Alternatives
 ------------
