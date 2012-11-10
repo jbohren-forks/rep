@@ -40,6 +40,25 @@ wstool merge
 
 there is no equivalent command for rosws regenerate.
 
+The wstool command will not use the ROS_WORKSPACE environment that
+rosws uses to allow manipulations of the workspace from anywhere in
+the filesystem with workspace-relative paths. The wstool context will
+be the first folder in the current path containing a wstool marker
+file (.rosinstall).
+
+This means the following use-case will not work::
+
+  cd ~/catkin_ws/build
+  make
+  wstool update some_package
+  make
+
+instead the user will have to cd to the respective package or the
+source folder for the wstool update operation. This is due to catkin
+not defining an environment variable with a single folder to use as
+workspace [3]_. This equally means that tab completion for rosws
+of relative paths will only work from within the wstool context.
+
 The catkin_make command has this syntax:
 catkin_make init [PATH]: create a REP128 compatible folder structure in PATH or current folder.
 This also involves creating environment setup file setup.*sh as specified in REP128.
@@ -125,6 +144,16 @@ as for the rosinstall tool before.
 
 The wstool commands will affect this .rosinstall file and subfolders of the src folder.
 
+Using .rosinstall as marker file for wstool may cause some confusion
+for users when creating rosbuild workspaces. Those will not get useful
+results when trying to init with a wstool workspace, since they should
+instead init with a catkin devel space or install space.
+
+However using a differently named marker file may equally be difficult
+to learn, and to use while switching between rosbuild and catkin
+workspaces. Also some users might prefer to use just one command for
+both kinds of workspaces since rosws and wstools remain largely
+equivalent.
 
 Alternatives
 ------------
@@ -140,6 +169,7 @@ Not desirable because of documentation backwards compatibility
 - Automatic detection of workspace type
 
 Not possible without fragile hacks
+
 
 Backwards Compatibility
 =======================
@@ -161,6 +191,9 @@ References and Footnotes
 
 .. [2] catkin
   (http://www.ros.org/wiki/catkin)
+
+.. [3] ROS_WORKSPACE with catkin
+  (https://github.com/ros/catkin/issues/249)
 
 Copyright
 =========
