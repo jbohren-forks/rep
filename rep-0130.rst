@@ -56,7 +56,8 @@ This means the following use-case will not work::
 instead the user will have to cd to the respective package or the
 source folder for the wstool update operation. This is due to catkin
 not defining an environment variable with a single folder to use as
-workspace [3]_. This equally means that tab completion for rosws
+workspace [3]_. A discussion of alternatives can be found in the reference.
+This equally means that tab completion for rosws
 of relative paths will only work from within the wstool context.
 
 The catkin_make command has this syntax:
