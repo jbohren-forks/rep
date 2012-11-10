@@ -161,15 +161,33 @@ Alternatives
 
 - Keep --catkin option
 
-Not desirable because of user confusion
+Not desirable because of user confusion. When a user forgets to pass
+that option during a rosinstall, rosws init or rosws merge call,
+setup.*sh files will be generated that have no purpose.
 
-- change rosws default behavior
+- change rosws default behavior to be setup.*sh agnostic
 
-Not desirable because of documentation backwards compatibility
+In theory rosws could be changed to never generate anything else than a
+.rosinstall file. For the rosbuild case, this would mean we'd need a
+small helper script to create those files, like
+ros_create_env [PATH]. This might also have benefits, but would mean
+that plenty of tutorials on the web would have to change their installation
+instructions.
 
 - Automatic detection of workspace type
 
-Not possible without fragile hacks
+Another possibility would be for rosws/rosinstall to automatically
+detect whether the workspace to be created/modified is a rosbuild
+workspace or a catkin workspace.
+
+Currently the following hints exists:
+
+The usage of a post-fuerte ROS_ROOT indicates a probability of this being
+a catkin workspace. However the same holds for rosbuild workspaces in Groovy.
+
+The presence of a CMakeLists.txt file (in particular referring to catkin)
+indicates this is to be a catkin workspace. However users might create
+that file after calling rosws init.
 
 
 Backwards Compatibility
