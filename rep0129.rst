@@ -11,8 +11,9 @@ Post-History:
 Abstract
 ========
 
-This REP defines the redesign of the rosinstall/rosws tools for catkin workspaces,
-into two new commands, called wstool and catkin_make.
+This REP defines the redesign of the rosinstall/rosws [1]_ tools for
+catkin [2]_ workspaces, into two new commands, called wstool and
+catkin_make.
 
 Specification
 =============
@@ -25,6 +26,24 @@ workspace specific information in the rosinstall file.
 
 There will be a new command as part of the catkin ecosystem called
 catkin_make, this one creates a folder structure as given in REP128.
+
+wstool commands and options will be those of rosws:
+wstool init: same as rosws init, but wstool has no --catkin and no --cmake-prefix-path option, also does not generate setup files.
+
+The following commands retain their options and semantics from rosws:
+wstool update
+wstool diff
+wstool status
+wstool info
+wstool set
+wstool merge
+
+there is no equivalent command for rosws regenerate.
+
+The catkin_make command has this syntax:
+catkin_make init [PATH]: create a REP128 compatible folder structure in PATH or current folder.
+This also involves creating environment setup file setup.*sh as specified in REP128.
+
 
 Motivation
 ==========
@@ -64,7 +83,7 @@ setting up a workspace with just a single command, this design made
 it hard for rosinstall to support several ROS distributions with ever
 changing environment properties.
 
-Therefore, the rosws replacement for catkin_workspaces will not offer
+Therefore, the rosws replacement for catkin workspaces will not offer
 any environment generation capabilities (setup.sh and similar), but merely
 maintain a single declarative file with source projects and the file tree.
 
@@ -76,11 +95,11 @@ Alternatives
 
 - Keep --catkin option
 
-Not desirable because of user confusion and convenience
+Not desirable because of user confusion
 
 - change rosws default behavior
 
-Not desirable because of documentation and backwards compatibility
+Not desirable because of documentation backwards compatibility
 
 - Automatic detection of workspace type
 
@@ -101,6 +120,11 @@ following the guidelines of this REP.
 References and Footnotes
 ========================
 
+.. [1] rosinstall
+  (http://www.ros.org/wiki/rosinstall)
+
+.. [2] catkin
+  (http://www.ros.org/wiki/catkin)
 
 Copyright
 =========
