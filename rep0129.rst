@@ -11,18 +11,20 @@ Post-History:
 Abstract
 ========
 
-This REP defines the redesign of the rosinstall/rosws tools for catkin,
-into two distinct commands, called wstool and catkin_ws.
+This REP defines the redesign of the rosinstall/rosws tools for catkin workspaces,
+into two new commands, called wstool and catkin_make.
 
 Specification
 =============
 
 For catkin workspaces in ROS groovy, the rosws command will be
 replaced by a similar command that mirrors rosws syntax and
-functionality except except for the generation of setup.*sh files.
+functionality the same except for the management of the workspace
+environment, which included the generation of setup.*sh files and
+workspace specific information in the rosinstall file.
 
 There will be a new command as part of the catkin ecosystem called
-catkin_ws, this one creates a folder structure as given in REP128.
+catkin_make, this one creates a folder structure as given in REP128.
 
 Motivation
 ==========
@@ -49,10 +51,12 @@ With this option the user always has to remember to call the --catkin
 option, else setup.*sh files would be generated, which could be confusing.
 While there is no harm, users can be expected to be confused.
 
-Therefore, differently named commands will be used for each kind of workspace.
+Therefore, differently named commands will be used for each kind of workspace,
+providing a clearer separation of concerns with the tools.
 
-A differently named command can also later be extended to better support
-the different contraints of catkin workspaces.
+The new tools can also later be extended to better support
+the different contraints of catkin workspaces without compromising the simplicity
+and robustness which currnetly exist in rosws/rosinstall.
 
 Also this problem reveals the general problem of mixing source
 management with setting up an environment. While rosinstall allowed
@@ -72,11 +76,11 @@ Alternatives
 
 - Keep --catkin option
 
-Not desirable because of user confusion
+Not desirable because of user confusion and convenience
 
 - change rosws default behavior
 
-Not desirable because of documentation backwards compatibility
+Not desirable because of documentation and backwards compatibility
 
 - Automatic detection of workspace type
 
@@ -85,7 +89,7 @@ Not possible without fragile hacks
 Backwards Compatibility
 =======================
 
-The rosws command remains in existence and maintained.
+The rosws command remains functionally identical and will continue to be maintained.
 
 Reference Implementation
 ========================
