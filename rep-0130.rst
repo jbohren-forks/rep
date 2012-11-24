@@ -30,15 +30,16 @@ catkin_make, this one creates a folder structure as given in REP128.
 wstool commands and options will be those of rosws:
 wstool init: same as rosws init, but wstool has no --catkin and no --cmake-prefix-path option, also does not generate setup files.
 
-The following commands retain their options and semantics from rosws:
-wstool update
-wstool diff
-wstool status
-wstool info
-wstool set
-wstool merge
+The following commands retain their options and semantics from rosws::
 
-there is no equivalent command for rosws regenerate.
+  wstool update
+  wstool diff
+  wstool status
+  wstool info
+  wstool set
+  wstool merge
+
+There is no equivalent command for ``rosws regenerate``.
 
 The wstool command will not use the ROS_WORKSPACE environment that
 rosws uses to allow manipulations of the workspace from anywhere in
