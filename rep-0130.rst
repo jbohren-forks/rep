@@ -24,11 +24,10 @@ functionality the same except for the management of the workspace
 environment, which included the generation of setup.*sh files and
 workspace specific information in the rosinstall file.
 
-There will be a new command as part of the catkin ecosystem called
-catkin_make, this one creates a folder structure as given in REP128.
-
 wstool commands and options will be those of rosws:
-wstool init: same as rosws init, but wstool has no --catkin and no --cmake-prefix-path option, also does not generate setup files.
+
+``wstool init``: same as rosws init, but wstool has no --catkin and
+no --cmake-prefix-path option, also does not generate setup files.
 
 The following commands retain their options and semantics from rosws::
 
@@ -39,38 +38,43 @@ The following commands retain their options and semantics from rosws::
   wstool set
   wstool merge
 
-There is no equivalent command for ``rosws regenerate``.
+There is no equivalent command for ``rosws regenerate``, which only
+regenerates env setup files.
 
-The wstool command will not use the ROS_WORKSPACE environment that
+The wstool command will still use the ROS_WORKSPACE environment that
 rosws uses to allow manipulations of the workspace from anywhere in
-the filesystem with workspace-relative paths. The wstool context will
-be the first folder in the current path containing a wstool marker
-file (.rosinstall).
-
-This means the following use-case will not work::
+the filesystem with workspace-relative paths. This means the following
+use-case will work::
 
   cd ~/catkin_ws/build
   make
   wstool update some_package
   make
 
-instead the user will have to cd to the respective package or the
-source folder for the wstool update operation. This is due to catkin
-not defining an environment variable with a single folder to use as
-workspace [3]_. A discussion of alternatives can be found in the reference.
-This equally means that tab completion for rosws
-of relative paths will only work from within the wstool context.
+The variable ROS_WORKSPACE has to be set in a catkin workspace via an
+environment hook equivalent to this::
 
-The catkin_make command has this syntax:
-catkin_make init [PATH]: create a REP128 compatible folder structure in PATH or current folder.
-This also involves creating environment setup file setup.*sh as specified in REP128.
+  @[if DEVELSPACE]@
+  _SPACES=(`echo $ROS_PACKAGE_PATH | tr ':' ' '`)
+  export ROS_WORKSPACE=${_SPACES[0]}
+  unset _SPACES
+  @[else]@
+  unset ROS_WORKSPACE
+  @[end if]@
+
+Equivalent solutions might use the CMAKE_PREFIX_PATH and .catkin file instead.
+
+The env hook source package has still to be decided (Likely candidates
+are ros, or a custompackage wstool_catkin). This relies on the catkin design
+to set ROS_PACKAGE_PATH to the source folder for rospkg backwards compatibility.
 
 Motivation
 ==========
 
 Early ROS releases shipped with the ``rosinstall`` tool, which
 provided communication with severeal SCMs, maintenance of a folder
-tree, creation of a build and runtime environment (via the ROS_PACKAGE_PATH).
+tree, creation of a build and runtime environment (via the
+ROS_PACKAGE_PATH set in geneates setup.*sh files).
 
 With the migration to catkin, the functionality of rosws to search for
 a ROS stack and generate a setup.sh file that sets ROS environment variables
@@ -84,7 +88,9 @@ rosws init --catkin ...
 rosws regenerate --catkin ...
 
 The --catkin option suppresses generation of setup.*sh files, and
-instead generates a CMakeLists.txt.
+instead generates a CMakeLists.txt (incompatible with catkin groovy at
+the time of writing, pending new release of catkin fuerte and change to
+rosinstall code to invoke catkin_init_workspace).
 
 With this option the user always has to remember to call the --catkin
 option, else setup.*sh files would be generated, which could be confusing.
@@ -93,9 +99,9 @@ While there is no harm, users can be expected to be confused.
 Therefore, differently named commands will be used for each kind of workspace,
 providing a clearer separation of concerns with the tools.
 
-The new tools can also later be extended to better support
-the different contraints of catkin workspaces without compromising the simplicity
-and robustness which currnetly exist in rosws/rosinstall.
+The new tools can also later be extended to better support the
+different contraints of catkin workspaces without compromising the
+simplicity and robustness which currently exist in rosws/rosinstall.
 
 Also this problem reveals the general problem of mixing source
 management with setting up an environment. While rosinstall allowed
@@ -109,6 +115,11 @@ maintain a single declarative file with source projects and the file tree.
 
 Environment tools may use the file syntax or library functions to reason
 about the source tree and generate an environment accordingly.
+
+A caveat exists for the dependence on ROS_WORKSPACE in cases where
+users decide to use multiple build folders with the same devel space
+(isolated build scenario). Setting ROS_WORKSPACE may then in some
+corner cases not yield the expected value.
 
 Rationale
 =========
@@ -130,26 +141,36 @@ This is the recommended layout for development::
      setup.zsh
 
 Setting up this workspace manually is tedious and error-prone. The
-catkin_make tool will create this structure, possibly by invoking
+catkin_make tool will help creating this structure, possibly by invoking
 other tools such as cmake. The implementation details of catkin_make
 are not part of this REP.
 
 wstool will act only on the src folder::
 
- workspace_folder/        --WORKSPACE
-   src/                   --SOURCE SPACE
-     CMakeLists.txt       --This is symlinked to catkin/cmake/toplevel.cmake
-     .rosinstall
+  workspace_folder/        --WORKSPACE
+    src/                   --SOURCE SPACE
+      CMakeLists.txt       --This is symlinked to catkin/cmake/toplevel.cmake
+      .rosinstall
 
 wstool init will create a .rosinstall file which will act the same way
 as for the rosinstall tool before.
 
 The wstool commands will affect this .rosinstall file and subfolders of the src folder.
 
-Using .rosinstall as marker file for wstool may cause some confusion
-for users when creating rosbuild workspaces. Those will not get useful
-results when trying to init with a wstool workspace, since they should
-instead init with a catkin devel space or install space.
+Caveat: Using .rosinstall as marker file for wstool may cause some
+confusion for users when creating rosbuild workspaces overlaying
+catkin workspaces. Those will not get useful results when trying to
+init with a wstool workspace, since they should instead init with a
+catkin devel space or install space.
+
+E.g.:
+This will yield positive results::
+
+  $ rosws init ~/rosbuild_ws ~/groovy_underlay/devel
+
+wihle this will not::
+
+  $ rosws init ~/rosbuild_ws ~/groovy_underlay/src
 
 However using a differently named marker file may equally be difficult
 to learn, and to use while switching between rosbuild and catkin
@@ -173,12 +194,19 @@ The problem with this is that this introduces a dependency to catkin
 internals. Also some confusion may arise when rosws and wstool have
 different was of globally determinig the current workspace.
 
-- Using ROS_WORKSPACE
+- Using ROS_PACKAGE_PATH at runtime
 
-Since with catkin, setup.*sh files are generated by catkin, catkin
-could set this variable (or provide some way for wstool to have it
-generated). However both ways are not ideal as catkin should remain
-agnostic of workspace tools.
+Since with catkin, setup.*sh files are generated by catkin. catkin
+sets ROS_PACKAGE_PATH to the source space used when configuring. This
+is done for backwards compatibility with rospkg. wstool could try and
+interpret the ROS_PACKAGE_PATH instead of relying solely on
+ROS_WORKSPACE. This would allow avoiding specifying and maintaining an
+additional variable ROS-WORKSPACE, which can heuristically be
+determined at runtime based on the ROS_PACKAGE_PATH. However this
+heuristic can fail once the ROS_PACKAGE_PATH is extended, and this
+introduces additional semantics to ROS_PACKAGE_PATH, which is
+undesirable as well. Also ROS_PACKAGE_PATH might one day become
+obsolete, since it was created only for backward compatbility.
 
 - Providing a separate setup.sh file
 
@@ -190,11 +218,18 @@ Such a file may also be confusing and thus do more harm than good.
 Alternatives regarding the creation of wstools
 ----------------------------------------------
 
-- Keep --catkin option
+- Keep rosws with --catkin option
 
 Not desirable because of user confusion. When a user forgets to pass
 that option during a rosinstall, rosws init or rosws merge call,
 setup.*sh files will be generated that have no purpose.
+
+However, this alternative has the benefit that it allows more easily
+to later introduce a new tool wstool which drops several other
+rosinstall design decisions that are no more relevant in
+catkin. Examples are the requirement to determine a fixed order of
+local repositories (for ROS_PACKAGE_PATH precedence) and the resulting
+registry of each ROS_PACKAGE_PATH entry (instead of just a root folder).
 
 - change rosws default behavior to be setup.*sh agnostic
 
@@ -229,8 +264,10 @@ The rosws command remains functionally identical and will continue to be maintai
 Reference Implementation
 ========================
 
-The Groovy distribution of ROS will provide two separate tools
-following the guidelines of this REP.
+The Groovy distribution of ROS will provide two separate additional
+tools wstool and catkin_make following the guidelines of this REP.
+A proof-of-concept implementation of the wstool env hook exists at
+https://github.com/tkruse/wstool_catkin
 
 
 References and Footnotes
