@@ -11,31 +11,46 @@ Post-History:
 Abstract
 ========
 
-This REP describes extensions to catkin to allow projects to be build
-within a catkin workspace but isolated from the catkin cmake process.
+This REP describes extensions to catkin to allow isolated builds of
+packages and in that process also build of plain cmake projects.
 
 Motivation
 ==========
 
 Catkin defines a catkin package to be a folder containing a
-package.xml file satisfying the catkin syntax and A CMakeFile.txt.
-Catkin provides cmake macros and naming / parameter rules to follow in
-the CMakelists.txt, but this is voluntary. However, not using the
-catkin macros or not obeying the rules however causes packages not to
-produce build output that is compliant with catkin devel space layout,
-and may even break the build of several packages in the catkin
-workspace, due to the lack of cmake isolation between catkin projects.
+package.xml file satisfying the catkin syntax and a CMakeList.txt.
 
-On the other hand several libraries inthe ROS ecosystem have a complex
-CMakeLists.txt setup, and some maintainers may be reluctant to maintain
-a catkin-compliant CMakeLists.txt.
+Catkin provides cmake macros and variables, in particular the
+catkin_package() macro, which performs necessary steps for a catkin
+package to be build successfully in the catkin build process.  This
+relates to the configure process of a package also generating suitable
+configuration files for dependent packages, as well as placing
+suitable build artifacts in the so called devel space.
+
+However it is technically feasible to create a catkin package that
+does not use the provided catkin cmake macros or variables. The
+CMakeLists.txt then defines a build process according to e.g. plain
+cmake rules. Such a project which is not compliant with catkin breaks
+the default catkin build process (mainly due to the lack of
+catkin-generated cmake configuration file, and due to the absence of
+valid devel space files).
+
+Several libraries in the ROS ecosystem have a complex CMakeLists.txt
+setup, and some maintainers may be reluctant to maintain a
+catkin-compliant CMakeLists.txt.
 
 This introduces the notion of a rogue catkin package. Such a package
 has a package.xml file, but does not follow any convention about the
-CMakeLists.txt.
+CMakeLists.txt. This REP defines basic support for an alternative
+build process that can also include such rogue catkin packages. This
+measure is a workaround and not currently intended for the majority of
+catkin users. Current caveats are very low speed, missing features in
+the devel space, and a confusing folder layout. The target audience
+are users who want to build core ros packages from source, rather than
+using pre-packaged distributions.
 
-The first packages to be included like this are libraries having no
-dependencies to catkin packages, like flann, kdl, opencv, pcl.
+The first packages to be included as rogue catkin packages like this
+are libraries like flann, kdl, opencv, pcl.
 
 Specification
 =============
@@ -46,20 +61,22 @@ of the package.xml:
 
 Catkin wil use the value of this tag to determine how to treat a
 package.  Currently only two values are defined, "catkin" and "cmake",
-but further build types may be added later (possible examples could
-be make, autotools, rosbuild).
+but further build types may be added later (possible examples could be
+make, autotools, rosbuild). "catkin" is the default value for this
+property that will be assumed in the absence of the tag.
 
-TODO: more details on the build chain invocation
-.. TODO: Copied from meeting notes
-        The flow would be:
-            catkin_make_prerequisites (no target passing, flags go through)
-            catkin_make
-                now things are built into devel
-            catkin_make_prerequisites --install
-            catkin_make install
-                now everything is installed into the install space
+Having a package with a different build_type than "catkin" in the
+catkin workspace will make the catkin build fail. Instead, the user
+will have to invoke a new command "catkin_build_isolated", which
+performs the build of all workspace projects in a different way catkin
+usually does. Each catkin package will be build using an isolated make
+invocation. This is necessary as rogue catkin packages do not act
+compliantly within the configuration process (they do not generate
+catkin-compliant configuration files during configuration so that
+other packages could depend on them after configuration).
 
-
+.. TODO: Explain how rogue packages and isolated catkin packages
+   behave with respect to build space, devel space and install space.
 
 Rationale
 =========
@@ -73,44 +90,24 @@ follow to reduce the risk of undesired cmake namespace collisions
 between catkin packages (Some namespace collisions are desired to
 detect conflicts early that have to be resolved anyway).
 
-Catkin also defines a devel space which acts like an install space. By
-complying to catkin rules for CMakeLists.txt, developers ensure that a
-catkin package can be deployed to a devel space properly. The
-develspace artifacts are generated by invoking the "make" command,
-with the default target (no 'install' necessary).
+Catkin also defines a devel space which acts like an install space in
+many respects. By complying to catkin rules for CMakeLists.txt,
+developers ensure that a catkin package can be deployed to a devel
+space properly. The devel space artifacts are generated by invoking
+the "make" command, with the default target (no 'install' necessary).
 
-A rogue catkin package does not follow catkin rules, as such it may
-cause undesired cmake namespace collisions and not produce a valid
-devel space layout.
+A rogue catkin package does not use catkin macros, so during it's
+configuration process it does not generate files for dependent
+packages to depend on it. This breaks the bulk-processing approach of
+the default catkin build process.
 
-Rogue catkin projects can be supported by invoking a custom build tool
-and installing to the catkin devel space or the catkin install space.
-
-Several possibilities exist for the embedding of rogue catkin packages
-with custom build tools in a catkin process:
-
-1. Build, configure and install rogue catkin projects during the catkin processes:
-
- a. Build all rogue packages before proper catkin packages
- b. Build all rogue packages after proper catkin packages
- c. Invoke custom build tools as part of the catkin make command (but
-    not in the same cmake process)
-
-2. Build and configure rogue catkin projects outside the catkin processes
-
-Solution 2. means that a separate command exists that the user has to
-invoke to configure, build or install rogue catkin projects.
-
-
-TODO: analysis of alternatives
-.. TODO: Explain why all of solution 1 is not possible
-
-
+Instead, rogue catkin projects can be supported by dropping the bulk
+processing approach for an isolated build approach. This configures
+and builds each package before configuring and building dependent
+packages.
 
 References
 ==========
-
-
 
 
 Copyright
