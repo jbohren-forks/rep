@@ -78,6 +78,27 @@ other packages could depend on them after configuration).
 .. TODO: Explain how rogue packages and isolated catkin packages
    behave with respect to build space, devel space and install space.
 
+Any other build system than catkin to be supported has to satisfy the
+following constraints:
+
+ * building packages with the build system must produce in the devel
+   space artifacts equivalent to an installation of the package
+ * installing packages installs to the CMAKE_INSTALL_PREFIX
+
+Additionally, build systems should strive to support the following:
+
+ * Script files should not be duplicated in the devel space, but relay
+   files be used that point to the source files
+ * The source file tree should not be changed by build invocations,
+   the build space should be used for build artifacts that do not
+   belong into the develspace.
+
+CMake build system
+------------------
+
+The initial support for rogue catkin packages using the plain cmake
+build system is implemented like this.
+
 Rationale
 =========
 
