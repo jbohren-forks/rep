@@ -90,11 +90,12 @@ Build set management, the "other" element
 -----------------------------------------
 
 rosbuild relies on an environment variable called ROS_PACKAGE_PATH
-(colon separated paths) to manage the set of packages to be
-build.  Other tools (e.g. rospack) used the ROS_PACKAGE_PATH variable
-to determine the location of a package given a package name.
-The order of entries in ROS_PACKAGE_PATH allowed overlaying packages,
-with similarly named packages, earlier entries would be preferred.
+(colon separated paths) to manage the set of packages to be build, and
+the runtime environment. Other rosbuild related tools (e.g. rospack)
+used the ROS_PACKAGE_PATH variable to determine the location of a
+package given a package name. The order of entries in
+ROS_PACKAGE_PATH allowed overlaying packages, with similarly named
+packages, earlier entries would be preferred.
 
 rosinstall/rosws provide a means to set a ROS_PACKAGE_PATH via
 sourcing of setup.*sh files that read the entries or .rosinstall and
@@ -114,26 +115,24 @@ be added to the ROS_PACKAGE_PATH, the "other" element. Any such folder
 is used placed in the ROS_PACKAGE_PATH for build and runtime tools,
 but is not used for workspace vcs operations.
 
-With catkin workspaces, the ROS_PACKAGE_PATH is not used to determine
-overlaying order within a workspace. Instead, catkin crawls the whole
-source space for package folders, with the ability to prevent crawling
-subfolders by using marker files, ignoring any .rosinstall file. This
-functionality is provided within the catkin_pkg package, and the
-design choice to crawl all subfolders instead of a list maintained by
-rosinstall/rosws was historically made to allow the feature of flat
-workspaces with minimal lookup time, a feature that since then has
-been dropped. In other words, it is thinkable for catkin to revert
-back to crawling a whitelisted set of folders for sources and allow
-overlaying instead of crawling a folder.
+With catkin workspaces and catkin generated runtime environments, the
+ROS_PACKAGE_PATH is not used to determine overlaying order of catkin
+packages. Instead, at build time catkin crawls the whole source folder
+for package folders, with the ability to prevent crawling subfolders
+by using marker files. The runtime environments (install space and
+develspace) use the FHS layout instead of the ROS_PACKAGE_PATH to
+locate package resources.
 
-So with rosws, a folder copied into the workspace iss not part of the
-build process by default (unless added to a sandbox), whereas in
-catkin a newly added folder is by default immediately part of the
-build process (unless in the subtree of a folder marked to be ignored).
-As a consequence, catkin does not allow sources of the same catkin
-package to live in the same source folder multiple times without all
-but one being deactivated via a marker file. Overlaying with catkin
-can only be achieved instead by chaining whole workspaces.
+So using a rosws workspace, a folder copied into the workspace is not
+part of the build process by default (unless added to a sandbox),
+whereas in catkin a newly added folder is by default immediately part
+of the build process (unless in the subtree of a folder marked to be
+ignored).
+
+Regarding build_time overlaying, catkin does not allow the same
+package to exist twice in a given workspace. So overlaying is possible
+only via separate, chained workspaces. Regarding run-time overlaying,
+catkin uses the CMAKE_PREFIX_PATH to overlay packages.
 
 So the requirement to maintain a list of locations inside a workspace
 folder is currently not relevant for the catkin build process anymore,
