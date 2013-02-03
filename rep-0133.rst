@@ -253,10 +253,13 @@ required.
 
 
 Solution
---------
+========
 
-Therefore, differently named commands will be used for each kind of
-workspace, providing a clearer separation of concerns with the tools.
+Based on the new requirements for a workspace management tool with
+catkin, we will use differently named commands for each kind of
+workspace (rosbuild or catkin). This distinction will provide a clearer
+separation of concerns with the tools than if all of the functionality
+was incorporated into rosws, alone.
 
 There will be a wstool command for all VCS commands, and a catkin_make
 tool for help with setting up a build folder layout and invoking cmake
