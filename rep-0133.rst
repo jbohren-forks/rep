@@ -62,9 +62,10 @@ command to initialize a folder.
 Motivation
 ==========
 
-The introduction of catkin as a buildsystem to replace rosbuild
-changes the requirements for a tool to support the management of
-multiple VCS repositories containing ROS packages.
+The introduction of catkin as a buildsystem to replace rosbuild as the 
+standard package- and build-system in ROS changes the requirements for 
+a tool to support the management of multiple VCS repositories containing
+ROS packages.
 
 Early ROS releases were supported by the ``rosinstall`` tool, which
 provided communication with several VCSs, maintenance of a list of
