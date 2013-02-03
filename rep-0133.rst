@@ -62,15 +62,32 @@ command to initialize a folder.
 Motivation
 ==========
 
+The introduction of catkin as a buildsystem to replace rosbuild
+changes the requirements for a tool to support the management of
+multiple VCS repositories containing ROS packages.
+
 Early ROS releases were supported by the ``rosinstall`` tool, which
 provided communication with several VCSs, maintenance of a list of
 folders to crawl for packages to be built and creation of a build and
 runtime environment (via the ROS_PACKAGE_PATH set in generated
-setup.*sh files). REP 110 introduced the rosws tool, which covered the
-same functionality but provided a VCS-like command syntax.
+setup.*sh files). Later, REP 110 introduced the ``rosws`` tool, 
+which covered the same functionality as ``rosinstall`` while 
+providing a familiar VCS-like command syntax.
 
-The introduction of catkin as a buildsystem to replace rosbuild
-changes the requirements or a tool to support multiple VCS repositories:
+Both of these tools were primarily designed to manage workspaces 
+of rosbuild-based ROS packages. When compared to rosbuild-based 
+``rosws`` workspaces, catkin workspaces have the following properties:
+
+- Environment setup.*sh files are now handled by catkin
+
+- The active set of packages is managed by a different mechanism
+
+- Catkin does not store the workspace path in an environment variable
+
+- Catkin encourages out-of-source builds, while rosbuild runs in-source
+
+The changes in requirements for a workspace management tool due to
+these properties of catkin are elaborated upon in the following sections.
 
 Environment setup.*sh file generation
 -------------------------------------
@@ -93,6 +110,29 @@ subfolder tree. However setting up a catkin workspace involves several
 further steps which are likely to vary over time as catkin changes, so
 the setup of a build environment should no more be provided by a
 workspace support tool.
+
+When catkin 0.4.x was released with ROS Fuerte, a quick workaround 
+solution was implemented, adding a `--catkin` option to rosinstall 
+and rosws commands that would suppress generation of setup.*sh 
+files and generate a CMakeLists.txt file compliant with that version
+of catkin instead::
+
+  rosinstall --catkin ...
+  rosws init --catkin ...
+  rosws regenerate --catkin ...
+
+The --catkin option suppresses generation of setup.*sh files, and
+instead generates a CMakeLists.txt (incompatible with catkin groovy at
+the time of writing, pending new release of catkin fuerte and change to
+rosinstall code to invoke catkin_init_workspace).
+
+With this option the user always has to remember to call the --catkin
+option, else setup.*sh files would be generated.  While there is no
+harm, this approach easily causes user confusion, and since catkin is
+supposed to replace rosbuild, the default behavior should not require
+users to invoke commands providing the --catkin option. However
+replacing the default behavior or rosws would be equally bad for users of ROS
+electric and fuerte using rosbuild.
 
 Build set management, the "other" element
 -----------------------------------------
@@ -188,30 +228,7 @@ provided with a single target source folder from the catkin
 environment, similarly no global ROS_WORKSPACE variable can be set
 from the catkin environment.
 
-The --catkin option
--------------------
 
-With the migration to catkin fuerte, a quick workaround solution was
-implemented, adding a --catkin option to rosinstall and rosws commands
-that would suppress generation of setup.*sh files and generate a
-CMakeLists.txt file compliant with catkin instead::
-
-  rosinstall --catkin ...
-  rosws init --catkin ...
-  rosws regenerate --catkin ...
-
-The --catkin option suppresses generation of setup.*sh files, and
-instead generates a CMakeLists.txt (incompatible with catkin groovy at
-the time of writing, pending new release of catkin fuerte and change to
-rosinstall code to invoke catkin_init_workspace).
-
-With this option the user always has to remember to call the --catkin
-option, else setup.*sh files would be generated.  While there is no
-harm, this approach easily causes user confusion, and since catkin is
-supposed to replace rosbuild, the default behavior should not require
-users to invoke commands providing the --catkin option. However
-replacing the default behavior or rosws would be equally bad for users of ROS
-electric and fuerte using rosbuild.
 
 Devel and install spaces with out-of-source builds
 --------------------------------------------------
